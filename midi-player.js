@@ -218,12 +218,18 @@ export class MidiPlayer {
             note.y = note.targetY - (timeToHit * this.fallingNotesRenderer.noteSpeed);
 
             if (!note.hidden && !note.played && this.currentTime >= note.time - 0.05) {
-                this.piano.playNote(note.name);
-                note.played = true;
-                this.activeNotesByFallingNote.set(note.id, note.name);
+                if (this.currentTime < note.time + note.duration) {
+                    this.piano.playNote(note.name);
+                    note.played = true;
+                    this.activeNotesByFallingNote.set(note.id, note.name);
+                } else {
+                    // Note already finished (e.g. seeking past it), mark as processed without playing
+                    note.played = true;
+                    note.released = true;
+                }
             }
 
-            if (!note.hidden && note.played && !note.hitAnimationStarted) {
+            if (!note.hidden && note.played && !note.hitAnimationStarted && !note.released) {
                 this.keyHitAnimator.startKeyHitAnimation(note);
                 note.hitAnimationStarted = true;
             }
@@ -305,6 +311,7 @@ export class MidiPlayer {
         // Clear visuals
         this.keyHitAnimator.pauseCSSHitAnimations();
         this.fallingNotesRenderer.reset();
+        this.lastScheduleTime = -100; // Reset so scheduling happens immediately
         
         // Update time state
         if (this.isPlaying) {

@@ -138,7 +138,11 @@ export class FallingNotesRenderer {
         const noteKey = `${note.name}-${note.time}`;
         const timeTillNote = note.time - currentTime;
         
-        if (timeTillNote <= this.fallTime && timeTillNote > -0.1 && !this.scheduledNotes.has(noteKey)) {
+        // Allow scheduling past notes if they are still within their duration window (plus buffer)
+        // This ensures long notes are rendered when seeking into the middle of them
+        const pastThreshold = -(note.duration + 2);
+        
+        if (timeTillNote <= this.fallTime && timeTillNote > pastThreshold && !this.scheduledNotes.has(noteKey)) {
             this.createFallingNote(note, isHidden);
             this.scheduledNotes.add(noteKey);
         }
